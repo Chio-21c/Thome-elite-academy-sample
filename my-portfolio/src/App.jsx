@@ -1105,6 +1105,16 @@ export default function App() {
               >
                 GitHub
               </motion.a>
+                            <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                href="https://www.linkedin.com/in/joseph-chiori-303265280/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 bg-white/5 backdrop-blur-sm border border-white/20 text-white font-bold rounded-xl hover:bg-white/10 hover:border-cyan-400/50 transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm lg:text-base"
+              >
+                linkedIn
+              </motion.a>
             </div>
           </motion.div>
         </div>
