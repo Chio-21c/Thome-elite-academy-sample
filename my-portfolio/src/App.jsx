@@ -844,7 +844,6 @@ export default function App() {
                   src="/profile.png"
                   alt="Joseph Chiori – Professional Web Developer & IT Specialist from Kenya"
                   className="w-full h-full object-cover"
-                  style={{ objectPosition: "50% 20%" }}
                   loading="eager"
                 />
               </div>
