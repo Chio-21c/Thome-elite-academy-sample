@@ -1,834 +1,517 @@
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from 'react';
 import {
-  Terminal, Activity, Server, Shield, HardDrive, Cpu, Network,
-  AlertCircle, CheckCircle2, ChevronRight, Monitor, BookOpen,
-  Wrench, Mail, Clock, ShieldAlert, Zap, Lock, Code, Database,
-  Menu, X, ShieldCheck, Users, FileCode2
-} from "lucide-react";
+  FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaTwitter, FaInstagram,
+  FaBus, FaCar, FaUsers, FaGraduationCap, FaChalkboardTeacher, FaDumbbell,
+  FaMusic, FaLaptop, FaPaintBrush, FaSwimmer, FaFutbol, FaBasketballBall,
+  FaVolleyballBall, FaCertificate, FaHandsHelping, FaClock, FaArrowRight,
+  FaCheckCircle, FaUniversity, FaChild, FaHeart, FaBookOpen, FaAward, FaBars, FaTimes
+} from 'react-icons/fa';
+import { MdSportsVolleyball } from 'react-icons/md';
 
-// --- CORE SYSTEM DATA ---
-const SYS_DATA = {
-  engineer: {
-    name: "Macharia Joseph Chiori",
-    designation: "Multi-Disciplinary IT Systems Engineer",
-    base: "Nairobi, Kenya",
-    education: "Kiambu National Polytechnic and Cisco Networking academy",
-    status: "ONLINE",
-    clearance: "Level 9 - Admin"
-  },
-  metrics: {
-    uptime: "99.998%",
-    activeServices: 42,
-    ticketsResolved: 1205,
-    avgResponse: "12ms"
-  }
-};
-
-const INCIDENT_REPORTS = [
-  {
-    id: "INC-2026-05A",
-    title: "Financial Data OCR Extraction Pipeline",
-    status: "RESOLVED",
-    severity: "HIGH",
-    category: "Automation / Data Processing",
-    problem: "Previous extraction models were guessing missing values and adding unverified columns to multi-page bank statements.",
-    diagnostic: "Analyzed OCR output layers. Found inference engine compensating for scan noise.",
-    solution: "Implemented strict zero-inference data extraction protocol. Enforced exact 1-to-1 table conversion (TRANS DATE, DEBIT, REMARKS) with strict exclusion of unverified page columns.",
-    outcome: "100% extraction accuracy achieved. Zero data hallucination.",
-    tech: ["Python", "OCR", "Regex", "Data Automation"]
-  },
-  {
-    id: "INC-2025-11B",
-    title: "Hardware Form Factor Optimization",
-    status: "DEPLOYED",
-    severity: "MEDIUM",
-    category: "Hardware Diagnostics",
-    problem: "Client required portability without compromising dual-pane workflow visibility.",
-    diagnostic: "Comparative physical and thermal diagnostic between 13.3-inch and 14-inch display architectures.",
-    solution: "Deployed 14-inch chassis with optimized scaling. Calibrated display drivers for maximum screen real estate. Printer Diagnosis. Computer Servicing and Software updates. Account Password reset",
-    outcome: "Increased user productivity by 22% with negligible footprint increase.",
-    tech: ["Hardware Analytics", "Display Calibration", "Ergonomics"]
-  },
-  {
-    id: "INC-2024-08C",
-    title: "Enterprise Web Infrastructure Deployment",
-    status: "RESOLVED",
-    severity: "CRITICAL",
-    category: "Web Ops / Hosting",
-    problem: "Legacy hosting environment suffered from SSL dropouts and high latency in East Africa region.",
-    diagnostic: "Traced packet loss to inefficient routing and expired certificate chains.",
-    solution: "Migrated to high-availability servers. Automated SSL renewal via InfinityFree integrations. Deployed React/Node.js stack with optimized caching.",
-    outcome: "Zero-downtime deployment. Latency reduced by 64%.",
-    tech: ["React", "Node.js", "SSL", "Server Admin"]
-  }
-];
-
-// --- COMPONENTS ---
-
-// 1. Navigation Pane (Responsive Sidebar)
-const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, setIsMobileOpen }) => {
-  const navItems = [
-    { id: "overview", label: "System Overview", icon: Activity },
-    { id: "profile", label: "Engineer Profile", icon: Terminal },
-    { id: "incidents", label: "Incident Reports", icon: AlertCircle },
-    { id: "hardware", label: "Hardware & Diagnostics", icon: Cpu },
-    { id: "security", label: "Security & Audits", icon: ShieldAlert },
-    { id: "tutoring", label: "Training Hub", icon: BookOpen },
-    { id: "support", label: "Support Console", icon: Mail },
-  ];
-
-  const handleNavClick = (id) => {
-    setActiveTab(id);
-    setIsMobileOpen(false); // Close menu on mobile after selection
-  };
-
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-40 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Content */}
-      <div className={`fixed inset-y-0 left-0 transform ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col h-full z-50`}>
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
-            <span className="font-mono text-sm font-bold text-zinc-300 tracking-wider">SYS_CTRL_NODE</span>
-          </div>
-          <button onClick={() => setIsMobileOpen(false)} className="md:hidden text-zinc-400 hover:text-zinc-100">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto custom-scrollbar">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md font-mono text-xs transition-all duration-200 ${
-                  isActive 
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]" 
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
-                }`}
-              >
-                <Icon size={16} className={isActive ? "text-emerald-400" : "text-zinc-600"} />
-                {item.label}
-                {isActive && <ChevronRight size={14} className="ml-auto opacity-50" />}
-              </button>
-            );
-          })}
-        </div>
-        <div className="p-4 border-t border-zinc-800">
-          <div className="text-[10px] font-mono text-zinc-600 space-y-1">
-            <p>OPR: {SYS_DATA.engineer.name}</p>
-            <p>LOC: {SYS_DATA.engineer.base}</p>
-            <p>STATUS: <span className="text-emerald-500">SECURE</span></p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-// 2. System Overview Module
-const SystemOverview = () => {
-  return (
-    <div className="p-4 md:p-6 h-full overflow-y-auto space-y-6">
-      <header className="mb-6 md:mb-8 border-b border-zinc-800 pb-4">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <Activity className="text-emerald-500" /> LIVE SYSTEMS OVERVIEW
-        </h1>
-        <p className="text-zinc-500 font-mono text-xs md:text-sm mt-2">Real-time infrastructure and operations telemetry.</p>
-      </header>
-
-      {/* Metric Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "SYS_UPTIME", value: SYS_DATA.metrics.uptime, icon: Clock, color: "text-emerald-400", border: "border-emerald-500/30" },
-          { label: "ACTIVE_NODES", value: SYS_DATA.metrics.activeServices, icon: Server, color: "text-cyan-400", border: "border-cyan-500/30" },
-          { label: "RESOLVED_INCIDENTS", value: SYS_DATA.metrics.ticketsResolved, icon: CheckCircle2, color: "text-zinc-300", border: "border-zinc-700" },
-          { label: "NETWORK_LATENCY", value: SYS_DATA.metrics.avgResponse, icon: Network, color: "text-amber-400", border: "border-amber-500/30" },
-        ].map((stat, i) => (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            key={i} 
-            className={`bg-zinc-950 border ${stat.border} p-4 rounded-lg relative overflow-hidden`}
-          >
-            <div className="absolute -right-4 -top-4 opacity-5"><stat.icon size={80} /></div>
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-mono text-zinc-500 tracking-widest">{stat.label}</span>
-              <stat.icon size={14} className={stat.color} />
-            </div>
-            <div className={`text-2xl md:text-3xl font-mono font-bold ${stat.color}`}>{stat.value}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Animated Architecture Map */}
-      <div className="border border-zinc-800 bg-zinc-950 p-4 md:p-6 rounded-lg relative overflow-hidden mt-6 overflow-x-auto">
-        <h3 className="font-mono text-xs text-zinc-400 mb-6 flex items-center gap-2">
-          <Network size={14} /> ARCHITECTURE TOPOLOGY
-        </h3>
-        <div className="flex items-center justify-between relative h-32 min-w-125 max-w-3xl mx-auto px-4">
-          {/* Connecting Lines */}
-          <div className="absolute top-1/2 left-0 w-full h-px bg-zinc-800 -translate-y-1/2 z-0">
-            <motion.div 
-              className="h-full bg-linear-to-r from-transparent via-emerald-500 to-transparent w-32 opacity-50"
-              animate={{ x: [-100, 800] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-            />
-          </div>
-          
-          {/* Nodes */}
-          {[
-            { label: "CLIENT_REQ", icon: Monitor },
-            { label: "LOAD_BALANCER", icon: Network },
-            { label: "REACT_UI", icon: Code },
-            { label: "NODE_API", icon: Server },
-            { label: "DATA_LAKE", icon: Database }
-          ].map((node, i) => (
-            <div key={i} className="relative z-10 flex flex-col items-center gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 border border-zinc-700 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-                <node.icon size={20} className="text-zinc-300" />
-              </div>
-              <span className="text-[9px] font-mono text-zinc-500 text-center">{node.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 3. Engineer Profile (Terminal Style + Image)
-const EngineerProfile = () => {
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col">
-      <header className="mb-6 border-b border-zinc-800 pb-4">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <Terminal className="text-cyan-500" /> WHOAMI
-        </h1>
-      </header>
-
-      <div className="flex-1 bg-black border border-zinc-800 rounded-lg p-4 md:p-6 font-mono text-xs md:text-sm overflow-y-auto custom-scrollbar relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-cyan-500 to-emerald-500 opacity-20" />
-        
-        <p className="text-zinc-400 mb-4">$ sysinfo --user Chiori --format extended</p>
-        
-        <div className="flex flex-col md:flex-row gap-8 mt-6 items-center md:items-start">
-          
-          {/* PROFILE IMAGE*/}
-          <div className="relative group shrink-0">
-            <div className="absolute -inset-0.5 bg-linear-to-r from-emerald-500 to-cyan-500 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-            <img
-              src="/profile.png" 
-              alt={SYS_DATA.engineer.name}
-              className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-emerald-500 object-cover" 
-              onError={(e) => {
-                e.target.onerror = null; 
-                e.target.src = "https://ui-avatars.com/api/?name=Macharia+Joseph+Chiori&background=0D1117&color=10B981&size=200"; // Fallback if image is missing
-              }}
-            />
-          </div>
-
-          <div className="text-zinc-300 space-y-2 flex-1 w-full text-center md:text-left">
-            <p><span className="text-cyan-400 font-bold">OP_NAME:</span>   {SYS_DATA.engineer.name}</p>
-            <p><span className="text-cyan-400 font-bold">ROLE:</span>      {SYS_DATA.engineer.designation}</p>
-            <p><span className="text-cyan-400 font-bold">BASE:</span>      {SYS_DATA.engineer.base}</p>
-            <p><span className="text-cyan-400 font-bold">POLY_INST:</span> {SYS_DATA.engineer.education}</p>
-            <br className="hidden md:block" />
-            <div className="w-full h-px bg-zinc-800 my-4 md:hidden"></div>
-            <p className="text-zinc-500">----------- SKILL MATRIX -----------</p>
-            <div className="space-y-2 text-left bg-zinc-950 p-4 rounded border border-zinc-800/50 mt-2">
-              <p><span className="text-emerald-400 font-bold block md:inline">DEV_STACK:</span>  React, Next.js, Node.js, Python, Tailwind</p>
-              <p><span className="text-emerald-400 font-bold block md:inline">INFRA:</span>      Windows 11 Mult-v, Office 2021, InfinityFree, SSL</p>
-              <p><span className="text-emerald-400 font-bold block md:inline">HARDWARE:</span>   Component Diagnostics, Screen Form Factor Analytics</p>
-              <p><span className="text-emerald-400 font-bold block md:inline">DATA_OPS:</span>   High-Precision OCR, Table Formatting, Zero-Inference</p>
-              <p><span className="text-emerald-400 font-bold block md:inline">EDU_OPS:</span>    IT Tutoring, Programming Workflows, Support</p>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-zinc-400 mt-8 mb-2">$ cat /var/log/clearance.log</p>
-        <p className="text-amber-400 bg-amber-500/5 p-3 border-l-2 border-amber-500"> Authorized to execute remote support, automate deployment pipelines, and configure network topologies. No unauthorized data extrapolation permitted.</p>
-        
-        <div className="mt-8 flex items-center gap-2 text-zinc-500">
-          <span className="text-emerald-500 animate-pulse">_</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 4. Incident Reports (Case Studies)
-const IncidentReports = () => {
-  const [selectedIncident, setSelectedIncident] = useState(INCIDENT_REPORTS[0]);
-
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col">
-      <header className="mb-4 md:mb-6 border-b border-zinc-800 pb-4">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <AlertCircle className="text-amber-500" /> INCIDENT / CASE LOGS
-        </h1>
-      </header>
-
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
-        {/* Ticket List */}
-        <div className="w-full lg:w-1/3 border border-zinc-800 bg-zinc-950 rounded-lg overflow-y-auto custom-scrollbar flex flex-col max-h-[40vh] lg:max-h-full shrink-0">
-          <div className="p-3 border-b border-zinc-800 bg-zinc-900/50 text-[10px] font-mono text-zinc-500 sticky top-0 backdrop-blur">
-            TICKET_QUEUE (DESC)
-          </div>
-          {INCIDENT_REPORTS.map((inc) => (
-            <button
-              key={inc.id}
-              onClick={() => setSelectedIncident(inc)}
-              className={`p-4 border-b border-zinc-800/50 text-left transition-colors flex flex-col gap-2 ${
-                selectedIncident.id === inc.id ? "bg-zinc-900 border-l-2 border-l-emerald-500" : "hover:bg-zinc-900/50 border-l-2 border-l-transparent"
-              }`}
-            >
-              <div className="flex justify-between items-center w-full">
-                <span className="text-xs font-mono text-cyan-400">{inc.id}</span>
-                <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${
-                  inc.status === "RESOLVED" ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
-                }`}>
-                  {inc.status}
-                </span>
-              </div>
-              <span className="text-sm text-zinc-300 font-semibold truncate">{inc.title}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Ticket Details */}
-        <div className="flex-1 border border-zinc-800 bg-black rounded-lg p-4 md:p-6 overflow-y-auto custom-scrollbar font-mono text-sm relative">
-          <div className="absolute top-4 right-4 opacity-5 pointer-events-none hidden sm:block">
-            <Shield size={100} />
-          </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 pb-4 border-b border-zinc-800">
-            <Wrench className="text-zinc-500 hidden sm:block" />
-            <h2 className="text-lg md:text-xl text-zinc-100">{selectedIncident.title}</h2>
-          </div>
-
-          <div className="space-y-6 text-zinc-300 relative z-10">
-            <div>
-              <h4 className="text-amber-500 text-xs mb-1"> DETECTED_PROBLEM</h4>
-              <p className="bg-zinc-900/50 p-3 border-l-2 border-amber-500/50 rounded-r-md text-xs md:text-sm">{selectedIncident.problem}</p>
-            </div>
-            
-            <div>
-              <h4 className="text-cyan-500 text-xs mb-1"> DIAGNOSTIC_PROCESS</h4>
-              <p className="bg-zinc-900/50 p-3 border-l-2 border-cyan-500/50 rounded-r-md text-xs md:text-sm">{selectedIncident.diagnostic}</p>
-            </div>
-
-            <div>
-              <h4 className="text-emerald-500 text-xs mb-1"> DEPLOYED_SOLUTION</h4>
-              <p className="bg-zinc-900/50 p-3 border-l-2 border-emerald-500/50 rounded-r-md text-xs md:text-sm">{selectedIncident.solution}</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-              <div className="border border-zinc-800 p-4 rounded bg-zinc-950">
-                <h4 className="text-zinc-500 text-[10px] mb-2">OUTCOME_METRICS</h4>
-                <p className="text-zinc-300 text-xs">{selectedIncident.outcome}</p>
-              </div>
-              <div className="border border-zinc-800 p-4 rounded bg-zinc-950">
-                <h4 className="text-zinc-500 text-[10px] mb-2">TOOLS_USED</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedIncident.tech.map(t => (
-                    <span key={t} className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400">{t}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 5. Hardware Diagnostics
-const HardwareDiagnostics = () => {
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col overflow-y-auto">
-      <header className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <HardDrive className="text-blue-500" /> HARDWARE & DIAGNOSTICS
-        </h1>
-      </header>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-        <div className="border border-zinc-800 bg-zinc-950 rounded-lg p-4 md:p-6 font-mono">
-          <h3 className="text-zinc-400 text-xs mb-6 flex items-center gap-2"><Cpu size={14}/> SYSTEM BENCH TELEMETRY</h3>
-          
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-zinc-300">CPU Thermal Load</span>
-                <span className="text-amber-400">62°C</span>
-              </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-amber-500" initial={{ width: 0 }} animate={{ width: "62%" }} transition={{ duration: 1 }} />
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-zinc-300">RAM Integrity Test</span>
-                <span className="text-emerald-400">PASS</span>
-              </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 1.5 }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-zinc-300">Storage I/O (SSD Health)</span>
-                <span className="text-cyan-400">98% OPTIMAL</span>
-              </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-cyan-500" initial={{ width: 0 }} animate={{ width: "98%" }} transition={{ duration: 1.2 }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border border-zinc-800 bg-black rounded-lg p-4 md:p-6 font-mono relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl pointer-events-none" />
-          <h3 className="text-zinc-400 text-xs mb-4 flex items-center gap-2"><Monitor size={14}/> REPAIR & MOD WORKFLOWS</h3>
-          <ul className="space-y-3 text-xs text-zinc-300 relative z-10">
-            <li className="flex items-start gap-3 p-3 hover:bg-zinc-900 rounded transition-colors border-l-2 border-zinc-800 hover:border-blue-500">
-              <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-zinc-200">Laptop Form Factor Scaling</p>
-                <p className="text-zinc-500 mt-1">Analyzing 13.3" vs 14" chassis dimensions for optimal screen-to-body ratios and thermal dissipation.</p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3 p-3 hover:bg-zinc-900 rounded transition-colors border-l-2 border-zinc-800 hover:border-blue-500">
-              <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-zinc-200">OS Provisioning & Driver Config</p>
-                <p className="text-zinc-500 mt-1">Windows 11 base image deployment via SCCM/Intune with pre-configured Office 2021 setups.</p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3 p-3 hover:bg-zinc-900 rounded transition-colors border-l-2 border-zinc-800 hover:border-blue-500">
-              <Activity size={14} className="text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-zinc-200">Component Level Troubleshooting</p>
-                <p className="text-zinc-500 mt-1">Identifying localized short circuits and motherboard power rail failures.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 6. Security & Audits (NEW)
-const SecurityAudits = () => {
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col overflow-y-auto">
-      <header className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <ShieldAlert className="text-red-500" /> SECURITY & AUDITS
-        </h1>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-        {/* Network Firewall Stats */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-lg font-mono">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-xs text-zinc-400">DEFCON LEVEL</span>
-              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] rounded border border-emerald-500/20">NORMAL</span>
-            </div>
-            <div className="flex justify-center py-6">
-              <div className="relative flex items-center justify-center">
-                <ShieldCheck size={80} className="text-emerald-500 opacity-20 absolute" />
-                <span className="text-4xl font-bold text-zinc-100 relative z-10">99.8<span className="text-lg text-zinc-500">%</span></span>
-              </div>
-            </div>
-            <p className="text-center text-[10px] text-zinc-500 mt-2">SYSTEM INTEGRITY SCORE</p>
-          </div>
-
-          <div className="bg-black border border-zinc-800 p-5 rounded-lg font-mono text-xs">
-            <h3 className="text-zinc-400 mb-3 flex items-center gap-2"><Lock size={14}/> ACTIVE PROTOCOLS</h3>
-            <ul className="space-y-2 text-zinc-500">
-              <li className="flex justify-between"><span>SSL/TLS ENCRYPTION</span> <span className="text-emerald-400">ACTIVE</span></li>
-              <li className="flex justify-between"><span>PORT 22 (SSH)</span> <span className="text-amber-400">RESTRICTED</span></li>
-              <li className="flex justify-between"><span>DDoS MITIGATION</span> <span className="text-emerald-400">ROUTED</span></li>
-              <li className="flex justify-between"><span>OCR PIPELINE AUTH</span> <span className="text-emerald-400">SECURE</span></li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Live Threat Log */}
-        <div className="lg:col-span-2 bg-black border border-zinc-800 rounded-lg p-5 font-mono flex flex-col">
-          <h3 className="text-xs text-zinc-400 mb-4 flex items-center gap-2 border-b border-zinc-800 pb-2">
-            <Server size={14}/> FIREWALL TRAFFIC LOG (TAIL -F)
-          </h3>
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 text-[11px] bg-zinc-950 p-4 rounded border border-zinc-800/50 h-64 lg:h-auto">
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">11:41:02</span> <span>[INFO]</span> <span className="text-zinc-300">Auth success for admin_chiori from 192.168.1.104</span></div>
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">11:38:15</span> <span>[WARN]</span> <span className="text-amber-400">Multiple failed login attempts detected on port 21</span></div>
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">11:38:16</span> <span>[ACTN]</span> <span className="text-emerald-400">IP 45.33.xx.xx auto-banned for 24 hours.</span></div>
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">11:15:00</span> <span>[INFO]</span> <span className="text-zinc-300">Automated backup script completed. (Size: 4.2GB)</span></div>
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">10:59:44</span> <span>[INFO]</span> <span className="text-zinc-300">SSL Certificate renewed via ZeroSSL API.</span></div>
-            <div className="text-zinc-500 flex gap-4"><span className="text-zinc-600">10:45:21</span> <span>[INFO]</span> <span className="text-zinc-300">Node JS server cluster restarted seamlessly.</span></div>
-            <div className="animate-pulse text-zinc-600 mt-4">Waiting for new events...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 7. Training Hub (NEW)
-const TrainingHub = () => {
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col overflow-y-auto">
-      <header className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <BookOpen className="text-purple-500" /> IT TRAINING HUB
-        </h1>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-        {/* Courses List */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-mono text-zinc-400 mb-2">ACTIVE MODULES / SYLLABUS</h3>
-          
-          <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-lg hover:border-purple-500/50 transition-colors">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2 text-zinc-200 font-mono text-sm font-bold">
-                <FileCode2 size={16} className="text-purple-400" />
-                Frontend Web Engineering
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[9px] font-mono rounded">ACTIVE</span>
-            </div>
-            <p className="text-xs text-zinc-500 mb-3 leading-relaxed">
-              Teaching modern React.js, Next.js frameworks, responsive design with Tailwind CSS, and state management logic to incoming developers.
-            </p>
-            <div className="flex gap-2 text-[10px] font-mono text-zinc-600">
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">React</span>
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">HTML/CSS</span>
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">JS/ES6</span>
-            </div>
-          </div>
-
-          <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-lg hover:border-purple-500/50 transition-colors">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2 text-zinc-200 font-mono text-sm font-bold">
-                <Terminal size={16} className="text-cyan-400" />
-                Data Parsing & Automation
-              </div>
-              <span className="px-2 py-0.5 bg-zinc-800 text-zinc-400 text-[9px] font-mono rounded">SCHEDULED</span>
-            </div>
-            <p className="text-xs text-zinc-500 mb-3 leading-relaxed">
-              Workflow automation using Python. Focus on OCR text extraction, regex pattern matching, and zero-hallucination data structuring.
-            </p>
-            <div className="flex gap-2 text-[10px] font-mono text-zinc-600">
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">Python</span>
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">Regex</span>
-              <span className="bg-black px-2 py-1 rounded border border-zinc-800">Automation</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tutoring Stats & Notice */}
-        <div className="space-y-6">
-          <div className="bg-black border border-zinc-800 rounded-lg p-5 font-mono">
-             <h3 className="text-xs text-zinc-400 mb-4 border-b border-zinc-800 pb-2 flex items-center gap-2">
-               <Users size={14} /> MENTORSHIP METRICS
-             </h3>
-             <div className="grid grid-cols-2 gap-4 text-center">
-               <div className="bg-zinc-950 p-4 rounded border border-zinc-800/50">
-                 <div className="text-2xl text-purple-400 font-bold mb-1">24+</div>
-                 <div className="text-[9px] text-zinc-500">STUDENTS MENTORED</div>
-               </div>
-               <div className="bg-zinc-950 p-4 rounded border border-zinc-800/50">
-                 <div className="text-2xl text-cyan-400 font-bold mb-1">150h</div>
-                 <div className="text-[9px] text-zinc-500">LOGGED SESSIONS</div>
-               </div>
-             </div>
-          </div>
-
-          <div className="bg-zinc-900 border-l-4 border-l-purple-500 p-4 rounded-r-lg font-mono text-xs text-zinc-300">
-            <p className="mb-2"><span className="font-bold text-purple-400">SYSTEM NOTE:</span> Mentorship programs are tailored to practical, real-world deployment scenarios. Theory is minimized in favor of project-based building and live debugging.</p>
-            <p className="text-zinc-500 mt-4">Use the Support Console to request a 1-on-1 session.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 8. Support Portal (Contact)
-const SupportPortal = () => {
-  return (
-    <div className="p-4 md:p-6 h-full flex flex-col overflow-y-auto">
-      <header className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
-        <h1 className="text-xl md:text-2xl font-mono text-zinc-100 font-bold flex items-center gap-3">
-          <Zap className="text-emerald-500" /> SUPPORT / DISPATCH PORTAL
-        </h1>
-      </header>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-start pb-6">
-        <div className="bg-zinc-950 border border-zinc-800 p-4 md:p-6 rounded-lg font-mono">
-          <h3 className="text-xs text-zinc-400 mb-6 border-b border-zinc-800 pb-2">SUBMIT NEW TICKET</h3>
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label className="block text-[10px] text-zinc-500 mb-1">REQUESTER_ID (Name)</label>
-              <input type="text" className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-emerald-500" placeholder="e.g. John Doe" />
-            </div>
-            <div>
-              <label className="block text-[10px] text-zinc-500 mb-1">COMMS_LINK (Email)</label>
-              <input type="email" className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-emerald-500" placeholder="user@domain.com" />
-            </div>
-            <div>
-              <label className="block text-[10px] text-zinc-500 mb-1">SERVICE_CATEGORY</label>
-              <select className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-emerald-500">
-                <option>Web Development / Design</option>
-                <option>IT Infrastructure / OS Rollout</option>
-                <option>Hardware Repair / Diagnostics</option>
-                <option>Data Extraction / Automation</option>
-                <option>IT Tutoring / Training Session</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] text-zinc-500 mb-1">INCIDENT_DESCRIPTION</label>
-              <textarea rows={4} className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-emerald-500" placeholder="Define the operational requirement..." />
-            </div>
-            <button className="w-full bg-zinc-900 border border-zinc-700 hover:border-emerald-500 hover:text-emerald-400 text-zinc-300 px-4 py-2 rounded text-sm transition-colors flex items-center justify-center gap-2">
-              <Mail size={16} /> DEPLOY REQUEST
-            </button>
-          </form>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-black border border-zinc-800 p-4 md:p-6 rounded-lg font-mono">
-             <h3 className="text-xs text-zinc-400 mb-4 flex items-center gap-2"><Lock size={14}/> COMMS PROTOCOLS</h3>
-             <p className="text-xs md:text-sm text-zinc-400 leading-relaxed mb-4">
-               Direct communication channels are open for emergency IT support, enterprise contract negotiations, and remote troubleshooting sessions.
-             </p>
-             <div className="space-y-2 text-xs">
-               <div className="flex flex-col sm:flex-row sm:justify-between border-b border-zinc-800 pb-2 gap-1">
-                 <span className="text-zinc-500">STANDARD_EMAIL</span>
-                 <span className="text-cyan-400 break-all">josephchio21c@gmail.com</span>
-               </div>
-               <div className="flex flex-col sm:flex-row sm:justify-between border-b border-zinc-800 pb-2 pt-2 gap-1">
-                 <span className="text-zinc-500">EMERGENCY_LINK</span>
-                 <span className="text-emerald-400">+254 797 211 844 (WhatsApp)</span>
-               </div>
-               <div className="flex flex-col sm:flex-row sm:justify-between pt-2 gap-1">
-                 <span className="text-zinc-500">REPO_ACCESS</span>
-                 <a href="https://github.com/Chio-21c" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">github.com/Chio-21c</a>
-               </div>
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 9. Interactive Command Palette (Floating Terminal)
-const CommandPalette = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState([
-    { type: "sys", text: "Chiori OS Terminal initialized." },
-    { type: "sys", text: "Type 'help' for available commands." }
-  ]);
-  const endRef = useRef(null);
+function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [output]);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
 
-  const handleCommand = (e) => {
-    if (e.key === "Enter") {
-      const cmd = input.trim().toLowerCase();
-      const newOutput = [...output, { type: "user", text: `$ ${input}` }];
-      
-      switch (cmd) {
-        case "help":
-          newOutput.push({ type: "sys", text: "COMMANDS: help, ping, whoami, clear, date" });
-          break;
-        case "ping":
-          newOutput.push({ type: "sys", text: "Pinging chiori-servers... 12ms. Connection stable." });
-          break;
-        case "whoami":
-          newOutput.push({ type: "sys", text: `Engineer: ${SYS_DATA.engineer.name} | Clearance: Admin` });
-          break;
-        case "clear":
-          setOutput([]);
-          setInput("");
-          return;
-        case "date":
-          newOutput.push({ type: "sys", text: new Date().toString() });
-          break;
-        case "":
-          break;
-        default:
-          newOutput.push({ type: "err", text: `Command not found: ${cmd}` });
-      }
-      
-      setOutput(newOutput);
-      setInput("");
-    }
-  };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('opacity-0', 'translate-y-8');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const elements = document.querySelectorAll('.stat-item');
+    elements.forEach(el => observer.observe(el));
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
+  }, []);
+
+  const navLinks = [
+    { href: '#about', label: 'About' },
+    { href: '#programs', label: 'Programs' },
+    { href: '#sports', label: 'Sports' },
+    { href: '#transport', label: 'Transport' },
+    { href: '#why-us', label: 'Why Us' },
+  ];
 
   return (
-    <div className="fixed bottom-0 right-0 w-full md:max-w-md z-60">
-      <div 
-        className="bg-zinc-900 border-t md:border-l border-zinc-700 md:rounded-tl-lg flex items-center justify-between p-2 cursor-pointer shadow-lg"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="font-mono text-xs text-zinc-400 flex items-center gap-2 px-2">
-          <Terminal size={14} className="text-emerald-500" /> CLI_INTERFACE
-        </span>
-        <ChevronRight size={14} className={`text-zinc-500 transition-transform ${isOpen ? "rotate-90" : "-rotate-90"}`} />
+    <div className="min-h-screen bg-gray-50 font-sans antialiased overflow-x-hidden">
+      {/* Top Bar - Contact Info */}
+      <div className="bg-[#1a2a3a] text-white/90 text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 border-b border-[#c9a84c]/30 relative z-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-1 sm:gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 md:gap-4">
+            <a href="tel:0720922721" className="flex items-center gap-1 hover:text-[#c9a84c] transition-colors whitespace-nowrap">
+              <FaPhone className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />
+              <span className="hidden xs:inline">0720 922721</span>
+            </a>
+            <span className="hidden xs:inline text-white/30">|</span>
+            <a href="tel:0722233007" className="hidden xs:flex items-center gap-1 hover:text-[#c9a84c] transition-colors whitespace-nowrap">
+              <FaPhone className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />
+              <span>0722 233007</span>
+            </a>
+            <span className="hidden md:inline text-white/30">|</span>
+            <a href="mailto:thomeelite2015@gmail.com" className="hidden md:flex items-center gap-1 hover:text-[#c9a84c] transition-colors truncate max-w-[120px] sm:max-w-[150px]">
+              <FaEnvelope className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+              <span className="truncate">thomeelite2015@gmail.com</span>
+            </a>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="hidden sm:inline text-white/80 text-[9px] sm:text-xs">📌 P.O. Box 600 - 00618 Ruaraka</span>
+            <span className="bg-[#c9a84c]/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[#c9a84c] font-semibold text-[7px] sm:text-[10px] md:text-xs whitespace-nowrap">
+              AT THOME PEFA CHURCH
+            </span>
+          </div>
+        </div>
       </div>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }} 
-            animate={{ height: 250, opacity: 1 }} 
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-black md:border-l border-zinc-800 font-mono text-xs overflow-hidden flex flex-col shadow-2xl"
-          >
-            <div className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-1">
-              {output.map((line, i) => (
-                <div key={i} className={`
-                  ${line.type === "sys" ? "text-zinc-400" : ""}
-                  ${line.type === "user" ? "text-emerald-400" : ""}
-                  ${line.type === "err" ? "text-red-400" : ""}
-                  wrap-break-word
-                `}>
-                  {line.text}
-                </div>
+
+      {/* Navigation - responsive with mobile menu */}
+      <nav className={`bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-gray-100 transition-shadow duration-300 ${scrolled ? 'shadow-xl' : 'shadow-lg'}`}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16 md:h-20">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#1a2a3a] rounded-xl flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md flex-shrink-0 overflow-hidden">
+                <img 
+                  src="/logo.png" 
+                  alt="Thome Elite Academy Logo" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="leading-tight">
+                <h1 className="font-bold text-[#1a2a3a] text-sm sm:text-base md:text-xl tracking-tight">
+                  THOME ELITE
+                </h1>
+                <p className="text-[6px] sm:text-[8px] md:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] text-[#5a6b7a] font-medium">
+                  Strive to Excel
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-3 lg:gap-8 text-[#2a3a4a] font-medium text-sm lg:text-base">
+              {navLinks.map((link) => (
+                <a 
+                  key={link.href} 
+                  href={link.href} 
+                  className="hover:text-[#c9a84c] transition-colors border-b-2 border-transparent hover:border-[#c9a84c] pb-1"
+                >
+                  {link.label}
+                </a>
               ))}
-              <div ref={endRef} />
             </div>
-            <div className="border-t border-zinc-800 p-2 flex items-center bg-zinc-950">
-              <span className="text-emerald-500 mr-2">$</span>
-              <input 
-                type="text" 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleCommand}
-                className="bg-transparent flex-1 outline-none text-zinc-200 w-full"
-                autoFocus
-              />
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <a 
+                href="#register" 
+                className="bg-[#c9a84c] hover:bg-[#b8973a] text-[#1a2a3a] font-semibold px-2.5 sm:px-4 md:px-7 py-1 sm:py-1.5 md:py-2.5 rounded-full text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transition-all duration-300 whitespace-nowrap"
+              >
+                Register Now
+              </a>
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors text-[#1a2a3a]"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <FaTimes className="w-5 h-5 sm:w-6 sm:h-6" /> : <FaBars className="w-5 h-5 sm:w-6 sm:h-6" />}
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+          </div>
 
-
-// --- MAIN APP CONTAINER ---
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "overview": return <SystemOverview />;
-      case "profile": return <EngineerProfile />;
-      case "incidents": return <IncidentReports />;
-      case "hardware": return <HardwareDiagnostics />;
-      case "security": return <SecurityAudits />;
-      case "tutoring": return <TrainingHub />;
-      case "support": return <SupportPortal />;
-      default: return <SystemOverview />;
-    }
-  };
-
-  return (
-    <div className="h-screen w-full bg-black text-zinc-200 flex flex-col overflow-hidden selection:bg-emerald-500/30">
-      
-      {/* Top Global Status Bar */}
-      <div className="h-10 md:h-8 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-3 md:px-4 text-[10px] md:text-xs font-mono shrink-0 z-20">
-        <div className="flex items-center gap-3 md:gap-4 text-zinc-500">
-          <button 
-            className="md:hidden text-zinc-300 hover:text-white"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu size={18} />
-          </button>
-          <span className="flex items-center gap-1"><Shield size={12} className="text-emerald-500" /> <span className="hidden sm:inline">SECURE_CONN</span></span>
-          <span className="hidden md:inline">IPV4: 192.168.1.104</span>
+          {mobileMenuOpen && (
+            <div className="md:hidden py-3 border-t border-gray-100 bg-white">
+              <div className="flex flex-col space-y-2">
+                {navLinks.map((link) => (
+                  <a 
+                    key={link.href} 
+                    href={link.href} 
+                    className="text-[#2a3a4a] hover:text-[#c9a84c] transition-colors px-2 py-1.5 text-sm font-medium border-l-2 border-transparent hover:border-[#c9a84c] pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <a 
+                  href="#register" 
+                  className="bg-[#c9a84c] hover:bg-[#b8973a] text-[#1a2a3a] font-semibold px-4 py-2 rounded-full text-sm shadow-lg hover:shadow-xl transition-all duration-300 text-center mx-2 mt-1"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Register Now
+                </a>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-3 md:gap-4 text-zinc-500">
-          <span className="text-emerald-500">{SYS_DATA.metrics.uptime}</span>
-          <span>{new Date().toISOString().split('T')[0]}</span>
+      </nav>
+
+      {/* Hero Section - with school-photo as background */}
+      <section className="relative overflow-hidden min-h-[90vh] sm:min-h-[85vh] md:min-h-[80vh] lg:min-h-screen flex items-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 w-full h-full">
+          <img 
+            src="/school-photo.png" 
+            alt="Thome Elite Academy" 
+            className="w-full h-full object-cover"
+          />
+          {/* Overlay Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0f1a26]/90 via-[#1a2a3a]/80 to-[#0f1a26]/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f1a26]/70 via-transparent to-[#0f1a26]/30"></div>
         </div>
-      </div>
 
-      {/* Main Workspace Split-Pane */}
-      <div className="flex-1 flex overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[150px] sm:w-[300px] md:w-[500px] h-[150px] sm:h-[300px] md:h-[500px] bg-[#c9a84c]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-[150px] sm:w-[250px] md:w-[400px] h-[150px] sm:h-[250px] md:h-[400px] bg-[#c9a84c]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
         
-        <Sidebar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          isMobileOpen={isMobileMenuOpen}
-          setIsMobileOpen={setIsMobileMenuOpen}
-        />
-        
-        {/* Content Area */}
-        <main className="flex-1 bg-[#0a0a0a] relative overflow-hidden">
-          {/* Subtle grid background */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] mask-[linear-gradient(to_bottom,white,transparent)] pointer-events-none" />
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="h-full relative z-10"
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-      </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-10 sm:py-14 md:py-20">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-16 items-center">
+            <div className="text-white text-center lg:text-left">
+              <p className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] uppercase mb-2 sm:mb-3 flex items-center justify-center lg:justify-start gap-1 sm:gap-2">
+                <span className="w-4 sm:w-6 md:w-8 h-0.5 bg-[#c9a84c]"></span>
+                Nurturing Today
+              </p>
+              <h2 className="font-bold text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-[1.1] mb-2 sm:mb-4 md:mb-6 tracking-tight">
+                LEADING <br className="hidden sm:block" />
+                <span className="text-[#c9a84c]">TOMORROW!</span>
+              </h2>
+              <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg max-w-lg mx-auto lg:mx-0 mb-3 sm:mb-6 md:mb-10 leading-relaxed px-2 sm:px-0">
+                A holistic learning environment where every child discovers their potential, 
+                grows in character and excels in academics, talents and sports.
+              </p>
+              <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 justify-center lg:justify-start">
+                <a href="#register" className="bg-[#c9a84c] hover:bg-[#b8973a] text-[#1a2a3a] font-semibold px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 md:py-3.5 rounded-full text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-1 sm:gap-2">
+                  <span>Enroll Now</span>
+                  <FaArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                </a>
+                <span className="inline-flex items-center px-2.5 sm:px-4 md:px-5 py-1 sm:py-2 md:py-3 bg-white/10 backdrop-blur-sm rounded-full text-[9px] sm:text-xs md:text-sm text-white/90 border border-white/10">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 bg-[#c9a84c] rounded-full mr-1 sm:mr-1.5 md:mr-2.5 animate-pulse"></span>
+                  Limited Spaces Available
+                </span>
+              </div>
+            </div>
+            <div className="hidden lg:block"></div>
+          </div>
+        </div>
+      </section>
 
-      {/* Floating CLI */}
-      <CommandPalette />
+      {/* Who We Are - Logo removed */}
+      <section id="about" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
+            <div className="text-center md:text-left order-2 md:order-1">
+              <span className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.2em] uppercase">About Us</span>
+              <h3 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#1a2a3a] mt-2 mb-2 sm:mb-5 leading-tight">
+                WHO WE ARE
+              </h3>
+              <div className="w-12 sm:w-16 md:w-20 h-1 bg-[#c9a84c] rounded-full mx-auto md:mx-0 mb-4 sm:mb-6 md:mb-8"></div>
+              <p className="text-[#4a5a6a] text-sm sm:text-base lg:text-lg leading-relaxed px-2 sm:px-0">
+                Thome Elite Academy is a holistic institution committed to providing quality education, 
+                character development and a nurturing environment that brings out the best in every learner.
+              </p>
+              <div className="mt-6 sm:mt-8 md:mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 max-w-sm mx-auto md:mx-0">
+                <div className="stat-item opacity-0 translate-y-8 transition-all duration-700 bg-gray-50 p-3 sm:p-4 md:p-5 rounded-xl border border-gray-100 text-center">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#c9a84c]">10+</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-[#5a6b7a] font-medium">Years of Excellence</div>
+                </div>
+                <div className="stat-item opacity-0 translate-y-8 transition-all duration-700 delay-100 bg-gray-50 p-3 sm:p-4 md:p-5 rounded-xl border border-gray-100 text-center">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#c9a84c]">500+</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-[#5a6b7a] font-medium">Happy Students</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative order-1 md:order-2">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-[#1a2a3a] to-[#2a3a4a] border border-gray-200 flex items-center justify-center">
+                <div className="text-center p-6 sm:p-8 md:p-12">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 mx-auto mb-4 sm:mb-6 bg-[#c9a84c]/10 rounded-full flex items-center justify-center">
+                    <FaGraduationCap className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-[#c9a84c]" />
+                  </div>
+                  <h4 className="text-white font-bold text-lg sm:text-xl md:text-2xl">Excellence in Education</h4>
+                  <p className="text-white/60 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Building Future Leaders</p>
+                </div>
+              </div>
+              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 md:-bottom-5 md:-left-5 w-16 sm:w-28 md:w-40 h-16 sm:h-28 md:h-40 bg-[#c9a84c]/10 rounded-full blur-2xl"></div>
+              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 md:-top-5 md:-right-5 w-14 sm:w-24 md:w-32 h-14 sm:h-24 md:h-32 bg-[#c9a84c]/5 rounded-full blur-xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* Global Styles (Scrollbars & Utilities) */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(0,0,0,0.2);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #27272a;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #3f3f46;
-        }
-      `}} />
+      {/* Programs & Activities - responsive */}
+      <section id="programs" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-10 md:mb-16">
+            <span className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.2em] uppercase">Our Programs</span>
+            <h3 className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#1a2a3a] mt-2 leading-tight px-2">
+              HOLISTIC EDUCATION FOR A BRIGHT FUTURE
+            </h3>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-[#c9a84c] rounded-full mx-auto mt-3 sm:mt-4 md:mt-5"></div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            {[
+              { name: 'Ballet', icon: <FaPaintBrush className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />, desc: 'Creative Expression' },
+              { name: 'Skating', icon: <MdSportsVolleyball className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />, desc: 'Coordination & Fun' },
+              { name: 'Computer Studies', icon: <FaLaptop className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />, desc: 'Digital Literacy' },
+              { name: 'Music', icon: <FaMusic className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />, desc: 'Artistic Development' }
+            ].map((item, index) => (
+              <div key={index} className="group bg-white rounded-2xl p-3 sm:p-5 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-[#c9a84c]/30 text-center hover:-translate-y-1 sm:hover:-translate-y-2">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 md:w-20 md:h-20 bg-[#c9a84c]/10 rounded-2xl flex items-center justify-center mx-auto mb-1.5 sm:mb-3 md:mb-5 group-hover:bg-[#c9a84c]/20 transition-colors text-[#1a2a3a]">
+                  {item.icon}
+                </div>
+                <h4 className="font-bold text-[#1a2a3a] text-sm sm:text-base md:text-xl">{item.name}</h4>
+                <p className="text-[#5a6b7a] text-[10px] sm:text-xs md:text-sm mt-0.5 sm:mt-1 font-medium">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sports - responsive */}
+      <section id="sports" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-10 md:mb-16">
+            <span className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.2em] uppercase">Sports</span>
+            <h3 className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#1a2a3a] mt-2 leading-tight">
+              SPORTING ACTIVITIES
+            </h3>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-[#c9a84c] rounded-full mx-auto mt-3 sm:mt-4 md:mt-5"></div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            {[
+              { name: 'Football', icon: <FaFutbol className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10" /> },
+              { name: 'Basketball', icon: <FaBasketballBall className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10" /> },
+              { name: 'Volleyball', icon: <FaVolleyballBall className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10" /> },
+              { name: 'Swimming', icon: <FaSwimmer className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10" /> }
+            ].map((sport, index) => (
+              <div key={index} className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a2a3a] to-[#2a3a4a] p-3 sm:p-5 md:p-8 text-center min-h-[100px] sm:min-h-[140px] md:min-h-[200px] flex flex-col items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2">
+                <div className="absolute inset-0 bg-[#c9a84c]/5 group-hover:bg-[#c9a84c]/15 transition-colors"></div>
+                <div className="relative z-10 text-white">
+                  <div className="text-[#c9a84c] mb-0.5 sm:mb-2 md:mb-4">{sport.icon}</div>
+                  <h4 className="font-bold text-sm sm:text-lg md:text-2xl">{sport.name}</h4>
+                  <p className="text-white/60 text-[8px] sm:text-xs md:text-sm font-medium">Sports Program</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Transport Section - with school-bus and school-van */}
+      <section id="transport" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-10 md:mb-16">
+            <span className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.2em] uppercase">Transport</span>
+            <h3 className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#1a2a3a] mt-2 leading-tight">
+              SAFE & RELIABLE TRANSPORT
+            </h3>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-[#c9a84c] rounded-full mx-auto mt-3 sm:mt-4 md:mt-5"></div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 group hover:shadow-2xl transition-all duration-500">
+              <div className="h-36 sm:h-48 md:h-56 bg-[#1a2a3a] flex items-center justify-center relative overflow-hidden">
+                <img 
+                  src="/school-bus.png" 
+                  alt="School Bus" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-3 sm:p-5 md:p-6">
+                <h4 className="font-bold text-[#1a2a3a] text-sm sm:text-lg md:text-xl flex items-center gap-2">
+                  <FaBus className="text-[#c9a84c] w-4 h-4 sm:w-5 sm:h-5" />
+                  School Bus Service
+                </h4>
+                <p className="text-[#5a6b7a] text-xs sm:text-sm mt-1 sm:mt-2 leading-relaxed">
+                  Comfortable and safe transportation for all students with designated pickup and drop-off points.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 group hover:shadow-2xl transition-all duration-500">
+              <div className="h-36 sm:h-48 md:h-56 bg-[#1a2a3a] flex items-center justify-center relative overflow-hidden">
+                <img 
+                  src="/school-van.png" 
+                  alt="School Van" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-3 sm:p-5 md:p-6">
+                <h4 className="font-bold text-[#1a2a3a] text-sm sm:text-lg md:text-xl flex items-center gap-2">
+                  <FaCar className="text-[#c9a84c] w-4 h-4 sm:w-5 sm:h-5" />
+                  Staff Transport
+                </h4>
+                <p className="text-[#5a6b7a] text-xs sm:text-sm mt-1 sm:mt-2 leading-relaxed">
+                  Dedicated vehicles for staff and special school trips ensuring convenience and punctuality.
+                </p>
+              </div>
+            </div>
+            <div className="bg-[#1a2a3a] rounded-2xl p-4 sm:p-5 md:p-8 text-white shadow-lg flex flex-col justify-center border border-[#c9a84c]/20">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 md:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#c9a84c]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FaCheckCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#c9a84c]" />
+                </div>
+                <h4 className="font-bold text-sm sm:text-lg md:text-xl">Why Choose Us?</h4>
+              </div>
+              <ul className="space-y-1.5 sm:space-y-2 md:space-y-3 text-white/80 text-[10px] sm:text-xs md:text-sm">
+                <li className="flex items-start gap-1.5 sm:gap-2 md:gap-3">
+                  <span className="text-[#c9a84c] mt-0.5">•</span>
+                  <span>Professional and experienced drivers</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2 md:gap-3">
+                  <span className="text-[#c9a84c] mt-0.5">•</span>
+                  <span>Regular vehicle maintenance</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2 md:gap-3">
+                  <span className="text-[#c9a84c] mt-0.5">•</span>
+                  <span>Safe and secure transport system</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2 md:gap-3">
+                  <span className="text-[#c9a84c] mt-0.5">•</span>
+                  <span>Punctual pickup and drop-off</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us - responsive */}
+      <section id="why-us" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-10 md:mb-16">
+            <span className="text-[#c9a84c] font-semibold text-[10px] sm:text-xs md:text-sm tracking-[0.2em] uppercase">Why Us</span>
+            <h3 className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#1a2a3a] mt-2 leading-tight">
+              WHY CHOOSE THOME ELITE?
+            </h3>
+            <div className="w-12 sm:w-16 md:w-20 h-1 bg-[#c9a84c] rounded-full mx-auto mt-3 sm:mt-4 md:mt-5"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            {[
+              { title: 'Serene Environment', icon: <FaUniversity className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Peaceful learning atmosphere' },
+              { title: 'Modern Facilities', icon: <FaChalkboardTeacher className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'State-of-the-art classrooms' },
+              { title: 'Balanced Meals', icon: <FaHeart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Nutritious and healthy food' },
+              { title: 'Co-curricular', icon: <FaGraduationCap className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Holistic development' },
+              { title: 'Excellent Staff', icon: <FaUsers className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Qualified teachers' },
+              { title: 'Caring Teachers', icon: <FaHandsHelping className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Individual attention' },
+              { title: 'Christian Values', icon: <FaBookOpen className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Moral foundation' },
+              { title: 'Affordable Fees', icon: <FaAward className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />, desc: 'Value for money' }
+            ].map((item, index) => (
+              <div key={index} className="group bg-gray-50 rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm hover:shadow-xl transition-all duration-400 border border-gray-100 hover:border-[#c9a84c]/30 hover:-translate-y-1 sm:hover:-translate-y-2 flex items-start gap-2 sm:gap-3 md:gap-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#c9a84c]/10 rounded-xl flex items-center justify-center group-hover:bg-[#c9a84c]/20 transition-colors text-[#1a2a3a] flex-shrink-0">
+                  {item.icon}
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#1a2a3a] text-[10px] sm:text-xs md:text-sm">{item.title}</h4>
+                  <p className="text-[#5a6b7a] text-[8px] sm:text-[10px] md:text-xs mt-0.5 font-medium">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Register CTA - responsive */}
+      <section id="register" className="py-10 sm:py-16 md:py-20 lg:py-28 bg-[#1a2a3a] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 sm:w-64 md:w-96 h-40 sm:h-64 md:h-96 bg-[#c9a84c]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-40 sm:w-64 md:w-96 h-40 sm:h-64 md:h-96 bg-[#c9a84c]/5 rounded-full blur-3xl"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h3 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-white mb-2 sm:mb-3 md:mb-5 leading-tight">
+            REGISTER <span className="text-[#c9a84c]">NOW!</span>
+          </h3>
+          <p className="text-white/70 text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 md:mb-10 max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
+            Limited spaces available. Secure your child's place at Thome Elite Academy today.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-5 justify-center">
+            <a href="#" className="bg-[#c9a84c] hover:bg-[#b8973a] text-[#1a2a3a] font-semibold px-5 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 rounded-full text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+              <span>Enroll Now</span>
+              <FaArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </a>
+            <a href="tel:0720922721" className="border-2 border-white/30 hover:border-white/60 text-white hover:bg-white/10 px-5 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 rounded-full text-sm sm:text-base transition-all duration-300 flex items-center justify-center gap-2">
+              <FaPhone className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Call Us</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer - responsive */}
+      <footer className="bg-[#0f1a26] text-white/80 py-6 sm:py-12 md:py-16 border-t border-[#c9a84c]/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10">
+            <div className="text-center sm:text-left">
+              <div className="flex items-center gap-2 sm:gap-3 justify-center sm:justify-start mb-2 sm:mb-3 md:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#1a2a3a] rounded-xl flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md flex-shrink-0 overflow-hidden border border-[#c9a84c]/20">
+                  <img 
+                    src="/logo.png" 
+                    alt="Thome Elite Academy Logo" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base md:text-lg">THOME ELITE ACADEMY</h4>
+                  <p className="text-[8px] sm:text-[10px] md:text-xs text-white/60">AT THOME PEFA CHURCH</p>
+                </div>
+              </div>
+              <p className="text-[10px] sm:text-xs md:text-sm text-[#c9a84c] italic font-medium">"Strive to Excel"</p>
+              <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center sm:justify-start mt-3 sm:mt-4 md:mt-5">
+                <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#c9a84c]/20 transition-colors text-white/60 hover:text-[#c9a84c]">
+                  <FaFacebook className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
+                </a>
+                <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#c9a84c]/20 transition-colors text-white/60 hover:text-[#c9a84c]">
+                  <FaTwitter className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
+                </a>
+                <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#c9a84c]/20 transition-colors text-white/60 hover:text-[#c9a84c]">
+                  <FaInstagram className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
+                </a>
+              </div>
+            </div>
+            <div className="text-center sm:text-left">
+              <h5 className="font-semibold text-white mb-2 sm:mb-3 md:mb-4 text-sm sm:text-base">Contact</h5>
+              <div className="space-y-1.5 sm:space-y-2 md:space-y-3 text-[10px] sm:text-xs md:text-sm">
+                <p className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 md:gap-3 text-white/70 hover:text-white transition-colors">
+                  <FaPhone className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 text-[#c9a84c]" />
+                  <span>0720 922721 / 0722 233007</span>
+                </p>
+                <p className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 md:gap-3 text-white/70 hover:text-white transition-colors break-all">
+                  <FaEnvelope className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 text-[#c9a84c] flex-shrink-0" />
+                  <span className="break-all">thomeelite2015@gmail.com</span>
+                </p>
+                <p className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 md:gap-3 text-white/70 hover:text-white transition-colors">
+                  <FaMapMarkerAlt className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 text-[#c9a84c] flex-shrink-0" />
+                  <span>P.O. Box 600 - 00618 Ruaraka</span>
+                </p>
+              </div>
+            </div>
+            <div className="text-center sm:text-left">
+              <h5 className="font-semibold text-white mb-2 sm:mb-3 md:mb-4 text-sm sm:text-base">Quick Links</h5>
+              <ul className="space-y-1.5 sm:space-y-2 md:space-y-2.5 text-[10px] sm:text-xs md:text-sm">
+                <li><a href="#about" className="text-white/70 hover:text-[#c9a84c] transition-colors">About Us</a></li>
+                <li><a href="#programs" className="text-white/70 hover:text-[#c9a84c] transition-colors">Programs</a></li>
+                <li><a href="#sports" className="text-white/70 hover:text-[#c9a84c] transition-colors">Sports</a></li>
+                <li><a href="#transport" className="text-white/70 hover:text-[#c9a84c] transition-colors">Transport</a></li>
+                <li><a href="#register" className="text-white/70 hover:text-[#c9a84c] transition-colors">Register</a></li>
+              </ul>
+            </div>
+            <div className="text-center sm:text-left">
+              <h5 className="font-semibold text-white mb-2 sm:mb-3 md:mb-4 text-sm sm:text-base">Newsletter</h5>
+              <p className="text-[10px] sm:text-xs md:text-sm text-white/60 mb-2 sm:mb-3 md:mb-4">Subscribe for updates</p>
+              <div className="flex flex-col sm:flex-row">
+                <input type="email" placeholder="Your email" className="bg-white/5 border border-white/10 rounded-full sm:rounded-r-none px-3 sm:px-4 py-1.5 sm:py-2 md:py-2.5 text-[10px] sm:text-xs md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#c9a84c]/50 w-full sm:flex-1" />
+                <button className="bg-[#c9a84c] hover:bg-[#b8973a] text-[#1a2a3a] font-semibold px-3 sm:px-5 py-1.5 sm:py-2 md:py-2.5 rounded-full sm:rounded-l-none text-[10px] sm:text-xs md:text-sm transition-colors mt-1.5 sm:mt-0">
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-white/10 mt-6 sm:mt-8 md:mt-10 lg:mt-12 pt-4 sm:pt-6 md:pt-8 text-center text-[10px] sm:text-xs md:text-sm text-white/40">
+            <p>&copy; {new Date().getFullYear()} Thome Elite Academy. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
+
+export default App;
